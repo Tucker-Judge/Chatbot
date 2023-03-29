@@ -14,10 +14,12 @@ const io = new Server(server, {
   });
 
 // Open ai api request
+  const OPENAI_API_KEY = "sk-TB0Mhxq9JDQ5aZTvX6lfT3BlbkFJ3vYZlWiqGDuQnfg6OQOusk-TB0Mhxq9JDQ5aZTvX6lfT3BlbkFJ3vYZlWiqGDuQnfg6OQOu"
   const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
+  
   
 // Serve static files from the public folder
 app.use(express.static('public'));
@@ -40,9 +42,13 @@ io.on('connection', (socket) => {
     // msg reverse testing
     const reversed = msg.split('').reverse().join('');
     // Chatbot api fetch with message
-
+    const completion = (msg) => openai.createCompletion({ 
+      model: "text-davinci-003",
+      prompt: msg,
+    });
+    console.log(completion.data.choices[0].text);
     // Emit the message to all connected clients
-    socket.emit('chat response', reversed);
+    socket.emit('chat response', completion.data.choices[0].text);
   });
 
 // on docker limit 5 connections
