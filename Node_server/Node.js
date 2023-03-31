@@ -2,6 +2,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors')
+require('dotenv').config()
 const { Server } = require("socket.io");
 const { Configuration, OpenAIApi } = require("openai");
 
@@ -14,11 +15,14 @@ const io = new Server(server, {
   });
 
 // Open ai api request
-  const OPENAI_API_KEY = "sk-TB0Mhxq9JDQ5aZTvX6lfT3BlbkFJ3vYZlWiqGDuQnfg6OQOusk-TB0Mhxq9JDQ5aZTvX6lfT3BlbkFJ3vYZlWiqGDuQnfg6OQOu"
+
+  
   const configuration = new Configuration({
-    apiKey: OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
+  // console.log(configuration.apiKey)
+  // console.log(openai)
   
   
 // Serve static files from the public folder
@@ -32,24 +36,34 @@ server.listen(PORT, () => {
 });
 
 // Listen for incoming connections
-io.on('connection', (socket) => {
+io.on('connection', async(socket) => {
   console.log('A user connected');
+try {
 
   // Listen for incoming chat messages
-  socket.on('chat message', (msg) => {
+  socket.on('chat message', async(msg) => {
     // testing ...
     console.log(`${msg} received`);
     // msg reverse testing
-    const reversed = msg.split('').reverse().join('');
+    // const reversed = msg.split('').reverse().join('');
     // Chatbot api fetch with message
-    const completion = (msg) => openai.createCompletion({ 
-      model: "text-davinci-003",
-      prompt: msg,
+    const completion = await openai.createChatCompletion({ 
+      "model": "gpt-3.5-turbo",
+      "messages": [
+        // role rotates based on input
+        // Corrective Conversation Translation Scenario
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": msg},
+      ]
     });
     console.log(completion.data.choices[0].text);
     // Emit the message to all connected clients
-    socket.emit('chat response', completion.data.choices[0].text);
+    socket.emit('chat response', completion);
   });
+}
+catch (error) {
+ console.error(error)
+}
 
 // on docker limit 5 connections
   // Listen for disconnections
